@@ -4,9 +4,11 @@ A skill for discovering, evaluating, and managing AI skills from community sourc
 
 ## The Problem
 
-The open skills ecosystem is growing fast. Community-contributed skills are proliferating across GitHub repositories, curated lists, and social media. But there's no standard process for evaluating what's worth adopting, and no framework for doing it safely.
+The open skills ecosystem is growing fast — and so are the risks. Snyk's 2025 ToxicSkills research found that 36% of publicly available agent skills contain vulnerabilities, with over 1,400 malicious payloads identified across skill registries. Nearly 900 malicious skills were discovered in a single registry alone.
 
-Skills are loaded into your AI assistant's context window. A malicious skill can inject prompts, exfiltrate data through crafted instructions, or bundle scripts that execute with the same permissions as the user running the assistant. Installing a skill is an act of trust — and the ecosystem currently provides no tools for making that trust decision systematically.
+Security scanners like Caterpillar, MCP-Scan, and Cisco's skill-scanner have emerged to detect malware and prompt injection. Marketplaces like SkillsMP and Agent Skills Hub handle discovery. But no tool ties the full lifecycle together: finding skills, evaluating them holistically (not just for security, but for quality, structure, and fit), managing adoption decisions, and tracking what you've got.
+
+That's what skill-scout does. It's not another scanner — it's the evaluation framework that sits between discovery and adoption, combining security vetting with quality assessment in a single repeatable pipeline.
 
 ## What This Skill Does
 
@@ -95,9 +97,17 @@ Reports all skills across the pipeline, parses YAML frontmatter, and flags skill
 
 skill-scout uses the SKILL.md format [documented by Anthropic](https://support.claude.com/en/articles/12512198-how-to-create-custom-skills). The format is plain markdown with YAML frontmatter — portable to any tool that supports markdown-based skill or instruction files.
 
+## Related Projects
+
+skill-scout is designed to complement, not replace, existing tools in the ecosystem:
+
+- **Security scanners** — [Caterpillar](https://caterpillar.alice.io/), [MCP-Scan](https://github.com/invariantlabs-ai/mcp-scan), [Cisco skill-scanner](https://github.com/cisco-ai-defense/skill-scanner) handle deep automated security analysis. Use them alongside skill-scout's vetting checklist for defense in depth.
+- **Marketplaces** — [SkillsMP](https://skillsmp.com/), [Agent Skills Hub](https://agentskillshub.dev/) handle discovery at scale. Use skill-scout to evaluate what you find there before adopting.
+- **Skill builders** — [Claude Code Skill Factory](https://github.com/alirezarezvani/claude-code-skill-factory), [Superpowers](https://github.com/obra/superpowers) help create skills. Use skill-scout to vet the output.
+
 ## Contributing
 
-If you find a useful skill source or have improvements to the vetting checklist, contributions are welcome. The security framework in particular benefits from more eyes — if you spot a gap, please open an issue.
+See [CONTRIBUTING.md](CONTRIBUTING.md). Security improvements to the vetting checklist are the highest-value contributions — if you've encountered an attack pattern or evasion technique the checklist misses, please open an issue.
 
 ## License
 

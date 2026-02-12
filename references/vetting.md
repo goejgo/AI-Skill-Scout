@@ -122,6 +122,44 @@ Star counts and repository popularity are social proof, not security audits.
 - "Trending" or "viral" skills warrant more scrutiny, not less
 - If an upstream source reports a security incident, quarantine all skills from that source and re-vet before continued use
 
+## Retroactive Re-Scanning
+
+Vetting criteria evolve. Scanner capabilities improve. New threat patterns emerge. Skills that
+passed vetting under earlier, weaker criteria may have issues that current checks would catch.
+
+### When to re-scan
+
+- After upgrading `inventory.py` (new detection capabilities)
+- After updating this vetting checklist (new criteria)
+- After learning about a new attack pattern (e.g., from Snyk advisories, CVE reports)
+- After a security incident in any upstream source
+- Periodically — at minimum, every 5 scout rounds or monthly, whichever comes first
+
+### How to re-scan
+
+1. Run `inventory.py` against the full `vetted/` directory
+2. Review all `[EXECUTABLE]` flags — were these previously approved through the human gate?
+3. Review all `[SUSPICIOUS]` flags — prompt injection patterns that may have been missed
+4. For any newly flagged skills: re-vet using current checklist, not the checklist from when they were adopted
+5. Document findings in the scout log for the round
+
+### What to do with findings
+
+- **Executable content not previously approved**: Move to `rejected/` with `REJECTION.md`
+- **Suspicious instruction patterns**: Manual review, reject if confirmed
+- **Missing structural requirements** (no frontmatter, no SKILL.md): Fix or reject
+- **Skills from compromised sources**: Quarantine all skills from that source, re-vet individually
+
+### Automated scanning capabilities
+
+The `inventory.py` scanner currently checks for:
+- Executable file extensions (.py, .sh, .js, .ts, .bash, .zsh, .rb, .pl)
+- Command-bearing config keys in .json/.yaml/.yml files (regex-based boundary detection)
+- Prompt injection patterns: override instructions, privilege escalation, data exfiltration
+- Obfuscated content: base64-encoded blocks, zero-width Unicode characters
+
+These checks run automatically on every `inventory.py` scan — both new imports and retroactive sweeps.
+
 ## Adopt With Modifications
 
 When modifying community skills before adoption:

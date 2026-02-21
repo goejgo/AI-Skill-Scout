@@ -211,8 +211,14 @@ def remove_code_blocks(content: str) -> str:
     return content
 
 
-def scan_dir(dir_path: Path) -> list:
-    """Scan directory for skill subdirectories. Return list of skill info dicts."""
+def scan_dir(dir_path: Path, recurse_domains: bool = False) -> list:
+    """Scan directory for skill subdirectories. Return list of skill info dicts.
+
+    If recurse_domains=True, expects domain subdirectories (e.g., vetted/finance/,
+    vetted/dev/) and scans one level deeper. A subdirectory is treated as a domain
+    folder if it contains no SKILL.md itself (i.e., it's an organizational grouping,
+    not a skill).
+    """
     results = []
     if not dir_path.exists():
         return results
@@ -226,23 +232,43 @@ def scan_dir(dir_path: Path) -> list:
         if not item.is_dir() or item.name.startswith("."):
             continue
 
-        fm = read_frontmatter(item)
-        executable = has_executable_content(item)
-        suspicious = has_suspicious_instructions(item)
-
-        desc = fm.get("description", "(none)")
-        if len(desc) > 100:
-            desc = desc[:97] + "..."
-
-        results.append({
-            "dir": item.name,
-            "name": fm.get("name", item.name),
-            "description": desc,
-            "has_executable": executable,
-            "suspicious_patterns": suspicious,
-        })
+        if recurse_domains and not (item / "SKILL.md").exists():
+            # This is a domain subdirectory — scan its children
+            try:
+                sub_entries = sorted(item.iterdir())
+            except OSError:
+                continue
+            for sub_item in sub_entries:
+                if not sub_item.is_dir() or sub_item.name.startswith("."):
+                    continue
+                results.append(_scan_single_skill(sub_item, domain=item.name))
+        else:
+            # Direct skill directory (or flat structure)
+            results.append(_scan_single_skill(item))
 
     return results
+
+
+def _scan_single_skill(skill_path: Path, domain: str = None) -> dict:
+    """Scan a single skill directory and return its info dict."""
+    fm = read_frontmatter(skill_path)
+    executable = has_executable_content(skill_path)
+    suspicious = has_suspicious_instructions(skill_path)
+
+    desc = fm.get("description", "(none)")
+    if len(desc) > 100:
+        desc = desc[:97] + "..."
+
+    result = {
+        "dir": skill_path.name,
+        "name": fm.get("name", skill_path.name),
+        "description": desc,
+        "has_executable": executable,
+        "suspicious_patterns": suspicious,
+    }
+    if domain:
+        result["domain"] = domain
+    return result
 
 
 def print_section(title: str, skills: list) -> None:
@@ -253,7 +279,8 @@ def print_section(title: str, skills: list) -> None:
         return
     for s in skills:
         flag = " [EXECUTABLE]" if s["has_executable"] else ""
-        print(f"  {s['name']}{flag}")
+        domain = f" [{s['domain']}]" if s.get("domain") else ""
+        print(f"  {s['name']}{domain}{flag}")
         print(f"    {s['description']}")
 
 
@@ -292,9 +319,9 @@ def main():
     if system_skills_path and system_skills_path.exists():
         print_section("Installed (System)", scan_dir(system_skills_path))
 
-    # Pipeline directories
-    vetted = scan_dir(library_path / "vetted")
-    incoming = scan_dir(library_path / "incoming")
+    # Pipeline directories (vetted uses domain subdirectories)
+    vetted = scan_dir(library_path / "vetted", recurse_domains=True)
+    incoming = scan_dir(library_path / "incoming", recurse_domains=True)
     rejected = scan_dir(library_path / "rejected")
 
     print_section("Vetted (Ready to Load)", vetted)
